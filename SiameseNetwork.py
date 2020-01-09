@@ -21,15 +21,19 @@ from torch import optim
 import torch.nn.functional as F
 import pandas as pd
 
+#Global Variables
+EPOCHS = 3
 
+
+#main code
 class SiameseNetwork(nn.Module):
     def __init__(self):
         super(SiameseNetwork, self).__init__()
 
         self.cnn1 = nn.Sequential(
 
-        nn.Conv2D(1,96, kernel_size=3), #optional: add stride
-        nn.ReLu(inplace=True),
+        nn.Conv2d(1,96, kernel_size=3), #optional: add stride
+        nn.ReLU(inplace=True),
         nn.LocalResponseNorm(5,alpha=0.0001,beta=0.75,k=1),
 
         nn.Conv2d(96,256, kernel_size=3),
@@ -39,18 +43,18 @@ class SiameseNetwork(nn.Module):
         nn.MaxPool2d(kernel_size=3), #optional: add stride
         nn.ReLU(inplace=True),
 
-        nn.Conv2D(256,384, kernel_size=3), #optional: add stride
-        nn.ReLu(inplace=True),
+        nn.Conv2d(256,384, kernel_size=3), #optional: add stride
+        nn.ReLU(inplace=True),
         nn.LocalResponseNorm(5,alpha=0.0001,beta=0.75,k=1),
 
         nn.MaxPool2d(kernel_size=3), #optional: add stride
-        nn.ReLU(inplace=True)
+        nn.ReLU(inplace=True),
         )
 
         self.cnn2 = nn.Sequential (
 
-        nn.Conv2D(1,96, kernel_size=3), #optional: add stride
-        nn.ReLu(inplace=True),
+        nn.Conv2d(1,96, kernel_size=3), #optional: add stride
+        nn.ReLU(inplace=True),
         nn.LocalResponseNorm(5,alpha=0.0001,beta=0.75,k=1),
 
         nn.Conv2d(96,256, kernel_size=3),
@@ -60,8 +64,8 @@ class SiameseNetwork(nn.Module):
         nn.MaxPool2d(kernel_size=3), #optional: add stride
         nn.ReLU(inplace=True),
 
-        nn.Conv2D(256,384, kernel_size=3), #optional: add stride
-        nn.ReLu(inplace=True),
+        nn.Conv2d(256,384, kernel_size=3), #optional: add stride
+        nn.ReLU(inplace=True),
         nn.LocalResponseNorm(5,alpha=0.0001,beta=0.75,k=1),
 
         nn.MaxPool2d(kernel_size=3), #optional: add stride
@@ -69,20 +73,20 @@ class SiameseNetwork(nn.Module):
         )
 
         self.fc = nn.Sequential(
-        nn.Conv2D(1024,384,kernel_size=3),
-        nn.ReLu(inplace=True),
+        nn.Conv2d(1024,384,kernel_size=3),
+        nn.ReLU(inplace=True),
 
         nn.Upsample(scale_factor=2, mode='nearest'),
-        nn.ReLu(inplace=True),
+        nn.ReLU(inplace=True),
 
-        nn.Conv2D(384,256,kernel_size=3),
-        nn.ReLu(inplace=True),
+        nn.Conv2d(384,256,kernel_size=3),
+        nn.ReLU(inplace=True),
 
         nn.Upsample(scale_factor=2, mode='nearest'),
-        nn.ReLu(inplace=True),
+        nn.ReLU(inplace=True),
 
-        nn.Conv2D(384,256,kernel_size=3),
-        nn.ReLu(inplace=True),
+        nn.Conv2d(384,256,kernel_size=3),
+        nn.ReLU(inplace=True),
         # nn.Linear(30976, 1024), #input and output features
         # nn.ReLU(inplace=True),
         #
@@ -112,16 +116,13 @@ left_data = np.load('C:/Users/szymo/Documents/left_images_numpy.npy')
 right_data = np.load('C:/Users/szymo/Documents/right_images_numpy.npy')
 depth_map = np.load('C:/Users/szymo/Documents/depthmaps_numpy.npy')
 #Train the Model
-train_dataloader = DataLoader(siamese_dataset,# Load the dataset as pytorch tensors using dataloader
-                        shuffle=True,
-                        num_workers=8,
-                        batch_size=Config.train_batch_size)
+
 
 if torch.cuda.is_available(): # Check whether you have GPU is loaded or not
     print('Yes')
 
 # Declare Siamese Network
-net = SiameseNetwork().cuda()
+net = SiameseNetwork()
 # Decalre Loss Function
 
 
@@ -142,6 +143,14 @@ def imshow(img,text=None,should_save=False):
 def show_plot(iteration,loss):
     plt.plot(iteration,loss)
     plt.show()
+
+
+
+# Training the Network
+optimizer = optim.Adam(net.parameters(), lr=0.001)
+
+for epoch in range(EPOCHS):
+
 
 
 # -------------- Appendix ---------------------- Appendix ---------------------- Appendix ----------------- Appendix -----------------
