@@ -123,20 +123,24 @@ left_data = np.array([left_data])
 
 left_data = np.swapaxes(left_data,2,4)
 left_data = left_data[0,:,:,:,:]
-
-print(left_data.shape)
 right_data = np.swapaxes(right_data,1,3)
-print(right_data.shape)
+depth_map = np.array([depth_map, depth_map, depth_map])
+depth_map = np.swapaxes(depth_map, 0, 1)
+depth_map = np.swapaxes(depth_map, 2, 3)
 
 
 
 left_data = torch.from_numpy(left_data)
 right_data = torch.from_numpy(right_data)
 depth_map = torch.from_numpy(depth_map)
+print("Shapes:")
+print(left_data.shape)
+print(right_data.shape)
+print(depth_map.shape)
 
 train_dataloader = DataLoader([left_data, right_data, depth_map],
                         shuffle=True,
-                        num_workers=8,
+                        num_workers=0,
                         batch_size=30)
 # right_dataloader = DataLoader(right_data,
 #                         shuffle=True,
@@ -168,6 +172,7 @@ for epoch in range(0, 1):
     for i, data in enumerate(train_dataloader, 0):
         img0, img1, label = data
         optimizer.zero_grad()
+        print("input shape: ", img0, "right ", img1, "output: ", label)
         output = net(img0, img1)
         loss = criterion(output, label)
         loss.backward()
@@ -177,7 +182,7 @@ for epoch in range(0, 1):
             iteration_number += 10
             counter.append(iteration_number)
             loss_history.append(loss_contrastive.item())
-
+        break
 print(net)
 
 
