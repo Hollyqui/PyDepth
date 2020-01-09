@@ -32,7 +32,7 @@ class SiameseNetwork(nn.Module):
 
         self.cnn1 = nn.Sequential(
 
-        nn.Conv2d(1,96, kernel_size=3), #optional: add stride
+        nn.Conv2d(3,96, kernel_size=3), #optional: add stride
         nn.ReLU(inplace=True),
         nn.LocalResponseNorm(5,alpha=0.0001,beta=0.75,k=1),
 
@@ -112,11 +112,41 @@ class SiameseNetwork(nn.Module):
 
 
 
+# left_data = np.load('left_images_numpy.npy')
+# right_data = np.load('right_images_numpy.npy')
+# depth_map = np.load('depthmaps_numpy.npy')
 left_data = np.load('C:/Users/szymo/Documents/left_images_numpy.npy')
 right_data = np.load('C:/Users/szymo/Documents/right_images_numpy.npy')
 depth_map = np.load('C:/Users/szymo/Documents/depthmaps_numpy.npy')
-#Train the Model
 
+left_data = np.array([left_data])
+
+left_data = np.swapaxes(left_data,2,4)
+left_data = left_data[0,:,:,:,:]
+
+print(left_data.shape)
+right_data = np.swapaxes(right_data,1,3)
+print(right_data.shape)
+
+
+
+left_data = torch.from_numpy(left_data)
+right_data = torch.from_numpy(right_data)
+depth_map = torch.from_numpy(depth_map)
+
+train_dataloader = DataLoader([left_data, right_data, depth_map],
+                        shuffle=True,
+                        num_workers=8,
+                        batch_size=30)
+# right_dataloader = DataLoader(right_data,
+#                         shuffle=True,
+#                         num_workers=8,
+#                         batch_size=Config.train_batch_size)
+# for i in range(len(depth_map)):
+#     left_data[i] = left_data.view(-1,480, 640)
+#     right_data[i] = right_data.view(-1, 480, 640)
+
+#Train the Model
 
 if torch.cuda.is_available(): # Check whether you have GPU is loaded or not
     print('Yes')
@@ -124,8 +154,31 @@ if torch.cuda.is_available(): # Check whether you have GPU is loaded or not
 # Declare Siamese Network
 net = SiameseNetwork()
 # Decalre Loss Function
+criterion = nn.MSELoss()
+optimizer = optim.Adam(net.parameters(), lr=0.003)
+# output = net(left_data, right_data)
+# loss = criterion(output, depth_map)
+# loss.backward()
+# optimizer.step()
+counter = []
+loss_history = []
+iteration_number = 0
 
+for epoch in range(0, 1):
+    for i, data in enumerate(train_dataloader, 0):
+        img0, img1, label = data
+        optimizer.zero_grad()
+        output = net(img0, img1)
+        loss = criterion(output, label)
+        loss.backward()
+        optimizer.step()
+        if i % 50 == 0:
+            print("Epoch number {}\n Current loss {}\n".format(epoch, loss_contrastive.item()))
+            iteration_number += 10
+            counter.append(iteration_number)
+            loss_history.append(loss_contrastive.item())
 
+print(net)
 
 
 
@@ -150,10 +203,10 @@ def show_plot(iteration,loss):
 optimizer = optim.Adam(net.parameters(), lr=0.001)
 
 for epoch in range(EPOCHS):
+    break
 
 
-
-# -------------- Appendix ---------------------- Appendix ---------------------- Appendix ----------------- Appendix -----------------
+ # -------------- Appendix ---------------------- Appendix ---------------------- Appendix ----------------- Appendix -----------------
 
 #concatenate nets exemple
 class TwoInputsNet(nn.Module):
