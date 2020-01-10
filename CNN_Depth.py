@@ -9,9 +9,14 @@ from torch.autograd import Variable
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
+import timeit
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+def imageBatch(nb_image):
+    imgBatch = torch.rand(nb_image,3,640,480)
+    return imgBatch
 
 def firstStageCNN():
     return nn.Sequential(nn.Conv2d(3,10, kernel_size=3), #optional: add stride
@@ -64,37 +69,33 @@ class SiameseNetwork(nn.Module):
     
     def forward(self, input1, input2):
         output1 = self.cnn1(input1)
-        print("1")
-        # print(output1.shape)
         output2 = self.cnn2(input2)
-        print("2")
-        # # now we can reshape `c` and `f` to 2D and concat them
+
         combined = torch.cat((output1.view(output1.size(0), -1),
                               output2.view(output2.size(0), -1)), dim=1)
-        print(combined.shape)
+
         combined = torch.unsqueeze(combined,2)
-        print(combined.shape)
         combined = torch.unsqueeze(combined,3)
-        print(combined.shape)
         out = self.fc(combined)
 
         return output1
 
+
 net = SiameseNetwork()
 
-X_l1 = torch.stack((torch.randn((640,480)),torch.randn((640,480)),torch.randn((640,480))),0)
-X_l2 = torch.stack((torch.randn((640,480)),torch.randn((640,480)),torch.randn((640,480))),0)
-X_r1 = torch.stack((torch.randn((640,480)),torch.randn((640,480)),torch.randn((640,480))),0)
-X_r2 = torch.stack((torch.randn((640,480)),torch.randn((640,480)),torch.randn((640,480))),0)
-
-X_l = torch.stack((X_l1,X_l2))
-X_r = torch.stack((X_r1,X_r2))
+X_l = imageBatch(10)
+X_r = imageBatch(10)
 
 optimizer = optim.Adam(net.parameters(), lr=0.001)
 loss_function = nn.MSELoss()
-
 net.zero_grad()
+
+print(X_l.shape)
+
+start = timeit.timeit()
 outputs = net(X_l, X_r)
+end = timeit.timeit()
+print("Runtime:", end-start)
 
 loss = loss_function(outputs, outputs)
 loss.backward()
