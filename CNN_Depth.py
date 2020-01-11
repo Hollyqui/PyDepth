@@ -80,86 +80,59 @@ class SiameseNetwork(nn.Module):
 
         return output1
 
-
 net = SiameseNetwork()
-
-X_l = imageBatch(10)
-X_r = imageBatch(10)
-
-optimizer = optim.Adam(net.parameters(), lr=0.001)
-loss_function = nn.MSELoss()
-net.zero_grad()
-
-print(X_l.shape)
-
-start = timeit.timeit()
-outputs = net(X_l, X_r)
-end = timeit.timeit()
-print("Runtime:", end-start)
-
-loss = loss_function(outputs, outputs)
-loss.backward()
-optimizer.step()
-
-print(loss)
-
-
-
-
-
-
-
-#TRAINING
-
-#Global variables
-EPOCHS = 4
-NumberIMG = 10
-BATCH_SIZE = 5
-
-#Some important functions
-optimizer = optim.Adam(net.parameters(), lr=0.001)
-loss_function = nn.MSELoss()
-
-net.zero_grad()
 
 training_DATA_LEFT = imageBatch(NumberIMG)
 training_DATA_RIGHT = imageBatch(NumberIMG)
 depthMaps = depthMaps(NumberIMG)
 
+train(net, EPOCHS = 4, NumberIMG = 10, BATCH_SIZE = 5, training_DATA_LEFT, training_DATA_RIGHT, depthMaps)
 
+# NumberIMG is the amount of images in one EPOCH
+# training_DATA_LEFT etc is the tensor array with the whole dataset
+# for the moment it is training_DATA_LEFT = imageBatch(NumberIMG)
+def train(net, EPOCHS, NumberIMG, BATCH_SIZE, training_DATA_LEFT, training_DATA_RIGHT, depthMaps):
 
-def train():
-  print("train function was executed")
-  for epoch in range(EPOCHS):
-    COUNTER = 0
-    listOfIndexes = suffle(list(range(NumberIMG)))
+	optimizer = optim.Adam(net.parameters(), lr=0.001)
+	loss_function = nn.MSELoss()
 
-    for batch in range(NumberIMG/BATCH_SIZE):
-      leftList = []
-      rightList = []
-      depthList = []
+	net.zero_grad()
 
-      for img in range(BATCH_SIZE):
-        leftList.append(training_DATA_LEFT[listOfIndexes[COUNTER]])
-        rightList.append(training_DATA_RIGHT[listOfIndexes[COUNTER]])
-        depthList.append(depthMaps[listOfIndexes[COUNTER]])
-        COUNTER+=1
-      
-      leftBatch = torch.stack((leftList[0],leftList[1],leftList[2],leftList[3],leftList[4]), 1) 
-      rightBatch = torch.stack((rightList[0],rightList[1],rightList[2],rightList[3],rightList[4]), 1)
-      depthMapBatch = torch.stack((depthList[0], depthList[1], depthList[2], depthList[3], depthList[4]), 1)
-
-      optimizer.zero_grad()
-      
-      outputs = net(leftBatch, rightBatch)
-
-      loss = loss_function(outputs, depthMapBatch)
-      
-      loss.backward()
-      optimizer.step()
-
-      #Printing progression
-      if counter %10 == 0:
-        print("Epoch number")
+	training_DATA_LEFT = imageBatch(NumberIMG)
+	training_DATA_RIGHT = imageBatch(NumberIMG)
+	depthMaps = depthMaps(NumberIMG)
+	
+	print("train function was executed")
+	for epoch in range(EPOCHS):
+	COUNTER = 0
+	listOfIndexes = suffle(list(range(NumberIMG)))
+	
+	for batch in range(NumberIMG/BATCH_SIZE):
+	  leftList = []
+	  rightList = []
+	  depthList = []
+	
+	  for img in range(BATCH_SIZE):
+		leftList.append(training_DATA_LEFT[listOfIndexes[COUNTER]])
+		rightList.append(training_DATA_RIGHT[listOfIndexes[COUNTER]])
+		depthList.append(depthMaps[listOfIndexes[COUNTER]])
+		COUNTER+=1
+	  
+	  leftBatch = torch.stack(tuple(leftList), 1) 
+	  rightBatch = torch.stack(tuple(rightList), 1)
+	  depthMapBatch = torch.stack(tuple(depthList), 1)
+	
+	  optimizer.zero_grad()
+	  
+	  outputs = net(leftBatch, rightBatch)
+	
+	  loss = loss_function(outputs, depthMapBatch)
+	  
+	  loss.backward()
+	  optimizer.step()
+	
+	  #Printing progression
+	  if counter %10 == 0:
+		print("Epoch number")
 
   return net
