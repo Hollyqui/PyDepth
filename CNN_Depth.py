@@ -80,14 +80,6 @@ class SiameseNetwork(nn.Module):
 
         return output1
 
-net = SiameseNetwork()
-
-training_DATA_LEFT = imageBatch(NumberIMG)
-training_DATA_RIGHT = imageBatch(NumberIMG)
-depthMaps = depthMaps(NumberIMG)
-
-train(net, EPOCHS = 4, NumberIMG = 10, BATCH_SIZE = 5, training_DATA_LEFT, training_DATA_RIGHT, depthMaps)
-
 # NumberIMG is the amount of images in one EPOCH
 # training_DATA_LEFT etc is the tensor array with the whole dataset
 # for the moment it is training_DATA_LEFT = imageBatch(NumberIMG)
@@ -136,3 +128,16 @@ def train(net, EPOCHS, NumberIMG, BATCH_SIZE, training_DATA_LEFT, training_DATA_
 		print("Epoch number")
 
   return net
+
+def main():
+	net = SiameseNetwork()
+	
+	#This will import the real dataset in tensor arrays once the data is available
+	training_DATA_LEFT = imageBatch(NumberIMG)
+	training_DATA_RIGHT = imageBatch(NumberIMG)
+	depthMaps = depthMaps(NumberIMG)
+
+	final = train(net, EPOCHS = 4, NumberIMG = 10, BATCH_SIZE = 5, training_DATA_LEFT, training_DATA_RIGHT, depthMaps)
+
+if __name__ == '__main__':
+    main()
