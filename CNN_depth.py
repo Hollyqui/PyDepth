@@ -23,17 +23,21 @@ import timeit
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+from google.colab import drive
+height = 480
+width = 640
 
-
+'''Creates Random tensor that is the same size as the image (for testing)'''
 def imageBatch(nb_image):
-    imgBatch = torch.rand(nb_image, 3, 640, 480)
+    imgBatch = torch.rand(nb_image, 3, width, height)
     return imgBatch
 
+'''Creates Random tensor that is the same size as the depthmap (for testing)'''
 def depthBatch(nb_image):
-    depthBatch = torch.rand(nb_image, 640*480, 1, 1)
+    depthBatch = torch.rand(nb_image, width*height, 1, 1)
     return depthBatch
 
-
+'''CNN doing the first stage of the Semi-Siamese Network (forms the two 'heads')'''
 def firstStageCNN():
     return nn.Sequential(nn.Conv2d(3, 10, kernel_size=3),  # optional: add stride
                          nn.ReLU(inplace=True),
@@ -52,7 +56,8 @@ def firstStageCNN():
                          nn.MaxPool2d(kernel_size=3),  # optional: add stride
                          nn.ReLU(inplace=True))
 
-
+'''Form the complete network by taking the two heads and connecting them to
+the body'''
 class SiameseNetwork(nn.Module):
     def __init__(self):
         super(SiameseNetwork, self).__init__()
@@ -76,18 +81,11 @@ class SiameseNetwork(nn.Module):
                                 nn.Conv2d(36, 80, kernel_size=4),
                                 nn.ReLU(inplace=True),
 
-                                nn.Conv2d(80, 307200, kernel_size=1),
+                                nn.Conv2d(80, width*height, kernel_size=1),
                                 nn.ReLU(inplace=True)
                                 )
 
-        # nn.Linear(30976, 1024), #input and output features
-        # nn.ReLU(inplace=True),
-        #
-        # nn.Linear(1024, 128), #input and output features
-        # nn.ReLU(inplace=True),
-        #
-        # nn.Linear(128,2)
-
+    '''forwards through the first CNNs to the Main body then returns the output'''
     def forward(self, input1, input2):
         output1 = self.cnn1(input1)
         output2 = self.cnn2(input2)
@@ -101,13 +99,9 @@ class SiameseNetwork(nn.Module):
         print(out.shape)
         return out
 
-
-# NumberIMG is the amount of images in one EPOCH
-# training_DATA_LEFT etc is the tensor array with the whole dataset
-# for the moment it is training_DATA_LEFT = imageBatch(NumberIMG)
-# train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS = 4, NumberIMG = 10, BATCH_SIZE = 5)
-def train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS, NumberIMG, BATCH_SIZE):
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
+''' Does the training of the whole dataset'''
+def train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS, BATCH_SIZE):
+    optimizer = optim.Adam(net.parameters(), lr=0.1)
     loss_function = nn.MSELoss()
     dataset = utils.TensorDataset(training_DATA_LEFT, training_DATA_RIGHT, depthMaps)
     train_dataloader = DataLoader(dataset, shuffle=True, num_workers=0, batch_size=1)
@@ -119,36 +113,39 @@ def train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS, Numbe
         for i, data in enumerate(train_dataloader):
 
             img1, img2, depthmap = data
-            
-            optimizer.zero_grad()
-
+            optimizer.zero_grad() # reset gradient
             outputs = net(img1, img2)
             loss = loss_function(outputs, depthmap)
             loss.backward()
             optimizer.step()
-
-            # Printing progression
-            if COUNTER % 10 == 0:
-                print("Epoch number: ", COUNTER)
-                print("Loss:", loss)
-
-        return net
+        #Print out images and epoch numbers 
+        print("Epoch number: ", COUNTER)
+        COUNTER += 1
+        print("Loss:", loss)
+        plt.figure()
+        plt.imshow((outputs.view(height,width)).detach().numpy())
+        plt.show()
+        plt.figure()
+        plt.imshow((depthmap.view(height,width)).detach().numpy())
+        plt.show()
+    return net
 
 def main():
+    height = 480
+    width = 640
     net = SiameseNetwork()
-    NumberIMG = 10
     #This will import the real dataset in tensor arrays once the data is available
-    training_DATA_LEFT = imageBatch(NumberIMG)
-    training_DATA_RIGHT = imageBatch(NumberIMG)
-    depthMaps = depthBatch(NumberIMG) # depthMaps(NumberIMG)
-    final = train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS = 4, NumberIMG = 10, BATCH_SIZE = 5)
+    training_DATA_LEFT = np.load('left_images_numpy.npy')
+    training_DATA_RIGHT = np.load('right_images_numpy.npy')
+    depthMaps = np.load('depthmaps_numpy.npy')
+    training_DATA_LEFT = np.swapaxes(training_DATA_LEFT,1,3)
+    training_DATA_RIGHT = np.swapaxes(training_DATA_RIGHT,1,3)
+    training_DATA_LEFT = torch.from_numpy(training_DATA_LEFT)
+    training_DATA_RIGHT = torch.from_numpy(training_DATA_RIGHT)
+    depthMaps = torch.from_numpy(depthMaps)
+    # reshape output
+    depthMaps = depthMaps.view(-1,width*height,1,1)
+    train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS = 4, BATCH_SIZE = 5)
 
 if __name__ == '__main__':
     main()
-
-loss = loss_function(outputs, outputs)
-loss.backward()
-optimizer.step()
-
-print(loss)
-
