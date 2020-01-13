@@ -1,0 +1,95 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def compare(left_square, right_square): #here we define the compare function-other people are working on it
+    # Here goes the Neural Network to do actual comparison, for now it will just return a random value.
+    return np.random.rand()
+    
+        #define function that finds same-looking pixels, that depends on plenty of variables
+def find_pixels(left_image, right_image, square_size, nth_pixel_checked, sa_height, sa_width):
+        initial1 = 5
+        initial2 = 5 #where it starts checking,which sould equal to square size value ; for now, pick 5, later NN changes it
+        x = initial1
+        y = initial2 #your initial x,y are the initial values specified above
+    
+        #you go to left picture and pick an initial pixel and the square size are around it
+        left_square = left_image[x-square_size:x+square_size,     y-square_size:y+square_size] 
+    
+        #define search area in which I look for same pixels (that will be at the RIGHT image)
+        #start of search area
+        starting_x = x-sa_width
+        starting_y = y-sa_height
+        #end of search area
+        ending_x = x+sa_width
+        ending_y = y+sa_height
+
+        #now I need to see how much the two areas are alike (LIKELINESS), then figure out to which pixel on left image that corresponds (BEST MATCH) 
+        highest_likeness = 0 #at the beginning, before comparing the picture, the likeliness is 0
+        best_match_position = (0,0) #your initial best match is 0
+        for i in range(starting_x, ending_x, nth_pixel_checked): #for every i and
+            for j in range(starting_y, ending_y): #for every j in the search area
+                right_image[i,j] #of the right image; around this point I need to write a square_size (i, j now start at 0!!!)
+                right_square = right_image[i-square_size:i+square_size,   j-square_size:j+square_size] #define right image and from which to which element it goes
+        #by now I have itinerated through every part pixel (and its square_size surroundings) of the search area  
+
+                likeness = compare(left_square, right_square) #this function will compare the likeness of each right square to the left square
+                if likeness > highest_likeness: #if the new likeness is bigger than the set highest likeness (at the beginning, 0)
+                    highest_likeness = likeness #set your nw likeness as your highest likeliness
+                    best_match_position = (i,j) #also, set your best match position (to which the new highest likeness corresponds) to their new values i, j
+        #now you know where the pixel from the left image is located on the right image! :D
+
+        print("Pixels centered at (",x,y,") on the LEFT image correspond to pixels centered at (",i,j,") on the RIGHT image.")
+        
+        def comparison_train_function(Left_value, right_values, area, left_image, right_image, x, y, i, left_square, right_square):
+   
+    #calculating the area that is the same to both images as a portion of the whole image
+    n=square_size**2      # number_of_pixels_in_sqaure
+    i=horizontal_coordinate_on_right_image #how to tell that to a computer
+    j=vertical_component_on_right_image
+    x=horizontal_component_on_left_image
+    y=vertical_component_on_left_image
+    
+    right image[x,y]=0,0
+    left image[i,j]=0,0
+    
+    if x > i and j > y
+    area=(((i+square_size)-(x-square_size))*((j-square_size)-(y+square_size))/n
+    if x<i and j>y
+    area=(((x+square_size)-(i-square_size))*((y+square_size)-(j-square_size)))/n
+    if x>i and j<y
+    area=(((i+square_size)-(x-square_size))*((j+square_size)-(y-square_size)))/n
+    if x<i and j<y
+    area=(((x+square_size)-(i-square_size))*((j+square_size)-(y-square_size)))/n
+    
+    #calculate how many pixels from the right corresponds to pixels on the left.
+    
+#     left_squares = []
+#     right_squares = []
+#     overlap = []
+    for i in left_image #do the below thingy not only for 1 pixel, but for every single pixel on the left image
+        Left_value = list(left_square.getdata()) #left_value function defined as a list of pixel values of left_square, which is defined as all pixels in a square_size on the left image
+        #now: for each left value you need to find all the right values, and for each right value a compare one
+        Right_value = list(right_square.getdata()) #it gives you matrices of pixel values for all search area
+            for j in Right_value #for every one of the matrices that right_value produces (that cover the entire search area)
+            area(Left_value, Right_value)
+            print("The left image has pixel values ",Left_values, "for coordinates (", x, y, ") which correspond to coordinates (", i, j, ") (within the search area) on the right image; these have pixel values", Right_values, ". The % of picture overlap is ", area)
+            
+            if __name__ == '__main__': #This is the main function that can then call the other functions
+    image_height = 480
+    image_width = 640
+    square_size = 5 #we can modify later (nn will figure out what value fits best)
+    nth_pixel_checked = 2 # the location of every nth (where n is the value of the variable) pixel will be checked (NN modifies later)
+    sa_height, sa_width = 5, 20 # height of area searched, width of area searched (NN modifies later)
+    # generate random "images" (matrices) - before we get real NN
+    left_image = np.random.rand(480, 640)
+    right_image = np.random.rand(480, 640)
+    
+
+    
+    # just visualized the input images
+    #plt.imshow(left_image)
+    #plt.figure()
+    #plt.imshow(right_image)
+    # calls find_pixels function and passes all the arguments
+    find_pixels(left_image, right_image, square_size, nth_pixel_checked, sa_height, sa_width) #this is explained in the cell above
+    comparison_train_function(left_value, right_values, overlap, left_image, right_image)
