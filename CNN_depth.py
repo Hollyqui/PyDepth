@@ -24,6 +24,7 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from google.colab import drive
+from sklearn import preprocessing
 height = 480
 width = 640
 
@@ -37,19 +38,24 @@ def depthBatch(nb_image):
     depthBatch = torch.rand(nb_image, width*height, 1, 1)
     return depthBatch
 
+def normalize(imageBatch):
+    for i in range(len(imageBatch)):
+      imageBatch[i] = preprocessing.normalize(imageBatch[i], norm='l2', axis=1, copy=True, return_norm=False)
+    return imageBatch
+
 '''CNN doing the first stage of the Semi-Siamese Network (forms the two 'heads')'''
 def firstStageCNN():
-    return nn.Sequential(nn.Conv2d(3, 10, kernel_size=3),  # optional: add stride
+    return nn.Sequential(nn.Conv2d(3, 32, kernel_size=3, stride=2),  # optional: add stride
                          nn.ReLU(inplace=True),
                          nn.LocalResponseNorm(5, alpha=0.0001, beta=0.75, k=1),
 
-                         nn.Conv2d(10, 17, kernel_size=3),
+                         nn.Conv2d(32, 62, kernel_size=3, stride=2),
                          nn.ReLU(inplace=True),
                          nn.LocalResponseNorm(5, alpha=0.0001, beta=0.75, k=1),
                          nn.MaxPool2d(kernel_size=3),  # optional: add stride
                          nn.ReLU(inplace=True),
 
-                         nn.Conv2d(17, 25, kernel_size=3),  # optional: add stride
+                         nn.Conv2d(62, 92, kernel_size=3, stride=2),  # optional: add stride
                          nn.ReLU(inplace=True),
                          nn.LocalResponseNorm(5, alpha=0.0001, beta=0.75, k=1),
 
@@ -66,22 +72,22 @@ class SiameseNetwork(nn.Module):
 
         self.cnn2 = firstStageCNN()
 
-        self.fc = nn.Sequential(nn.Conv2d(182000, 2, kernel_size=1),
+        self.fc = nn.Sequential(nn.Conv2d(8832, 92, kernel_size=1),
                                 nn.ReLU(inplace=True),
 
                                 nn.Upsample(scale_factor=2, mode='nearest'),
                                 nn.ReLU(inplace=True),
 
-                                nn.Conv2d(2, 36, kernel_size=1),
+                                nn.Conv2d(92, 62, kernel_size=1),
                                 nn.ReLU(inplace=True),
 
                                 nn.Upsample(scale_factor=2, mode='nearest'),
                                 nn.ReLU(inplace=True),
 
-                                nn.Conv2d(36, 80, kernel_size=4),
+                                nn.Conv2d(62, 32, kernel_size=4),
                                 nn.ReLU(inplace=True),
 
-                                nn.Conv2d(80, width*height, kernel_size=1),
+                                nn.Conv2d(32, width*height, kernel_size=1),
                                 nn.ReLU(inplace=True)
                                 )
 
@@ -96,37 +102,50 @@ class SiameseNetwork(nn.Module):
         combined = torch.unsqueeze(combined, 2)
         combined = torch.unsqueeze(combined, 3)
         out = self.fc(combined)
-        print(out.shape)
         return out
 
 ''' Does the training of the whole dataset'''
 def train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS, BATCH_SIZE):
-    optimizer = optim.Adam(net.parameters(), lr=0.1)
+    optimizer = optim.Adam(net.parameters(), lr=0.005)
     loss_function = nn.MSELoss()
     dataset = utils.TensorDataset(training_DATA_LEFT, training_DATA_RIGHT, depthMaps)
     train_dataloader = DataLoader(dataset, shuffle=True, num_workers=0, batch_size=1)
     net.zero_grad()
-
+    COUNTER = 0
     print("train function was executed")
     for epoch in range(EPOCHS):
-        COUNTER = 0
         for i, data in enumerate(train_dataloader):
 
             img1, img2, depthmap = data
             optimizer.zero_grad() # reset gradient
             outputs = net(img1, img2)
             loss = loss_function(outputs, depthmap)
+            print("Loss:", loss)
+
             loss.backward()
             optimizer.step()
         #Print out images and epoch numbers 
         print("Epoch number: ", COUNTER)
-        COUNTER += 1
+        COUNTER += 1 
         print("Loss:", loss)
         plt.figure()
         plt.imshow((outputs.view(height,width)).detach().numpy())
-        plt.show()
+        # plt.show()
         plt.figure()
         plt.imshow((depthmap.view(height,width)).detach().numpy())
+        # plt.show
+        image = img1.view(3,480,640)
+        plt.figure()
+        plt.imshow(np.swapaxes(np.swapaxes(image.detach().numpy(),0,2),0,1))
+        plt.show()
+        outputs = net(img1, img2)
+        img1 = img1.view(3,480,640)
+        plt.figure()
+        plt.imshow((outputs.view(height,width)).detach().numpy())
+        plt.figure()
+        plt.imshow((depthmap.view(height,width)).detach().numpy())
+        plt.figure()
+        plt.imshow(np.swapaxes(np.swapaxes(img1.detach().numpy(),0,2),0,1))
         plt.show()
     return net
 
@@ -135,17 +154,19 @@ def main():
     width = 640
     net = SiameseNetwork()
     #This will import the real dataset in tensor arrays once the data is available
-    training_DATA_LEFT = np.load('left_images_numpy.npy')
-    training_DATA_RIGHT = np.load('right_images_numpy.npy')
-    depthMaps = np.load('depthmaps_numpy.npy')
-    training_DATA_LEFT = np.swapaxes(training_DATA_LEFT,1,3)
-    training_DATA_RIGHT = np.swapaxes(training_DATA_RIGHT,1,3)
+    training_DATA_LEFT = np.load('test_daylight_left.npy')
+    training_DATA_RIGHT = np.load('test_daylight_right.npy')
+    depthMaps = np.load('test_depthmap_left.npy')
+    # depthMaps = normalize(depthMaps)
+    # training_DATA_LEFT = np.swapaxes(training_DATA_LEFT,1,3)
+    # training_DATA_RIGHT = np.swapaxes(training_DATA_RIGHT,1,3)
     training_DATA_LEFT = torch.from_numpy(training_DATA_LEFT)
     training_DATA_RIGHT = torch.from_numpy(training_DATA_RIGHT)
     depthMaps = torch.from_numpy(depthMaps)
     # reshape output
     depthMaps = depthMaps.view(-1,width*height,1,1)
-    train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS = 4, BATCH_SIZE = 5)
+    network = final = train(net, training_DATA_LEFT, training_DATA_RIGHT, depthMaps, EPOCHS = 15, BATCH_SIZE = 5)
+    torch.save(network, 'saved_network')
 
 if __name__ == '__main__':
     main()
