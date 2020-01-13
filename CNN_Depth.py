@@ -9,6 +9,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
+from torchsummary import summary
 
 import matplotlib.pyplot as plt
 import numpy as np

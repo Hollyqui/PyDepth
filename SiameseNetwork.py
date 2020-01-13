@@ -87,14 +87,6 @@ class SiameseNetwork(nn.Module):
 
         nn.Conv2d(384,256,kernel_size=3),
         nn.ReLU(inplace=True),
-        # nn.Linear(30976, 1024), #input and output features
-        # nn.ReLU(inplace=True),
-        #
-        # nn.Linear(1024, 128), #input and output features
-        # nn.ReLU(inplace=True),
-        #
-        # nn.Linear(128,2)
-
         )
 
     def forward(self, input1, input2):
