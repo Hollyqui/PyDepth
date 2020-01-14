@@ -1,0 +1,103 @@
+import numpy as np
+import matplotlib.image as mpimg
+from random import randint
+import matplotlib.pyplot as plt
+
+
+original_img = mpimg.imread("/Users/06fioritom/Desktop/test_Resized.png")
+
+# generates the list of random coordinate points
+coordinate_list = []
+training_dataset_size = 20
+img_height, img_width, col_channels = original_img.shape
+i = 0
+for i in range(training_dataset_size):
+    random_x = randint(4, img_width-6)
+    random_y = randint(4, img_height-6)
+    random_coordinate = (random_x, random_y)
+    coordinate_list.append(random_coordinate)
+
+print("Co. list: ", coordinate_list)
+
+# creates the noisy image
+print("Original image shape: ", original_img.shape)
+noise = np.random.rand(img_height, img_width)
+noise = noise
+noise = noise[:, :, np.newaxis]
+# print(noise.shape)
+noisy_img = original_img * noise
+# plt.imshow(noisy_img)
+# plt.show()
+print("Noisy image shape:    ", noisy_img.shape)
+plt.imsave("/Users/06fioritom/Desktop/noisy_image.png", noisy_img)
+
+cropped_original_compilation = []
+cropped_noisy_compilation = []
+similarity_rating_compilation = []
+
+shifted_coordinate_list = []
+
+i = 0
+for i in range(training_dataset_size):
+
+    # defines the area to crop for original image
+    x, y = coordinate_list[i][0], coordinate_list[i][1]
+    # print("x: ", x, "y: ", y)
+    # cropped_original = np.full((9, 9, 3), -1) # create a 9*9*3 full of -1
+
+    crop_range_y_upper = y + 4
+    crop_range_y_lower = y - 5
+    crop_range_x_upper = x + 4
+    crop_range_x_lower = x - 5
+    # print("Crop ranges(yup, ylow, xup, xlow): ", crop_range_y_upper, crop_range_y_lower, crop_range_x_upper, crop_range_x_lower)
+    cropped_original = original_img[crop_range_y_lower:crop_range_y_upper, crop_range_x_lower:crop_range_x_upper, :] # crops the image
+    cropped_original_compilation.append(cropped_original)  # adds cropped region to list
+    # plt.imshow(cropped_original)
+    # plt.show
+
+    # defines the area to crop for noisy image
+    noise_crop_y_shift = randint(-2, 2)  # gives random y shift of +/- 2 pixels
+    noise_crop_x_shift = randint(-4, 4)  # gives random x shift of +/- 4 pixels
+    xn, yn = x + noise_crop_x_shift, y + noise_crop_y_shift # recenters the 9x9 selection based on y and y shift
+    crop_range_y_upper = yn + 4
+    crop_range_y_lower = yn - 5
+    crop_range_x_upper = xn + 4
+    crop_range_x_lower = xn - 5
+    cropped_noisy = noisy_img[crop_range_y_lower:crop_range_y_upper, crop_range_x_lower:crop_range_x_upper, :]  # crops the noisy image
+    cropped_noisy_compilation.append(cropped_noisy)  # adds cropped region to list
+    # plt.imshow(cropped_noisy)
+    # plt.show()
+
+    # give a similarity rating based on x and y shift
+    shift_x = abs(noise_crop_x_shift)
+    shift_y = abs(noise_crop_y_shift)
+    similarity_rating = 81 - (shift_y * 9) - ((9-shift_y) * shift_x)
+    similarity_rating = similarity_rating/81
+    # print("Similarity rating: ", similarity_rating)
+    similarity_rating_compilation.append(similarity_rating)
+
+    i = i + 1
+
+cropped_original_compilation = np.array(cropped_original_compilation)
+cropped_original_compilation = np.moveaxis(cropped_original_compilation, 3, 1)
+cropped_noisy_compilation = np.array(cropped_noisy_compilation)
+cropped_noisy_compilation = np.moveaxis(cropped_noisy_compilation, 3, 1)
+similarity_rating_compilation = np.array(similarity_rating_compilation)
+
+
+
+# print(shifted_coordinate_list)
+
+## if uncommented, will plot the location of the randomly chosen pixels
+# for i in range(training_dataset_size):
+#     plt.plot(coordinate_list[i][0],coordinate_list[i][1], 'o')
+# plt.show()
+
+print("")
+print("Cropped original array shape:  ", cropped_original_compilation.shape)
+print("Cropped noisy array shape:     ", cropped_noisy_compilation.shape)
+print("Similarity rating array shape: ", similarity_rating_compilation.shape)
+
+np.save("/Users/06fioritom/Desktop/cropped_original_compilation", cropped_original_compilation)
+np.save("/Users/06fioritom/Desktop/cropped_noisy_compilation", cropped_noisy_compilation)
+np.save("/Users/06fioritom/Desktop/similarity_rating_compilation", similarity_rating_compilation)
