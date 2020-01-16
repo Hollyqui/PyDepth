@@ -7,6 +7,14 @@ Original file is located at
     https://colab.research.google.com/drive/1fv7043xLqNU4Jc8dtVtLyS401vZfrLXU
 """
 
+from google.colab import drive
+drive.mount('/content/drive')
+
+!ls "/content/drive/My Drive/Data Alica method less noisy new/Image 1/"
+!cp "/content/drive/My Drive/Data Alica method less noisy new/Image 1/cropped_noisy_compilation_1.npy" "cropped_noisy_compilation_1.npy"
+!cp "/content/drive/My Drive/Data Alica method less noisy new/Image 1/cropped_original_compilation_1.npy" "cropped_original_compilation_1.npy"
+!cp "/content/drive/My Drive/Data Alica method less noisy new/Image 1/similarity_rating_compilation_1.npy" "similarity_rating_compilation_1.npy"
+
 import os
 import torch
 import torchvision
@@ -86,7 +94,7 @@ class SiameseNetwork(nn.Module):
 
 def train(net, finalR, finalL, finalLabel, EPOCHS, BATCH_SIZE):
     height, width = 9,9
-    optimizer = optim.Adam(net.parameters(), lr=0.005)
+    optimizer = optim.Adam(net.parameters(), lr=0.0005)
     loss_function = nn.BCELoss()
     dataset = utils.TensorDataset(finalL, finalR, finalLabel)
     train_dataloader = DataLoader(dataset, shuffle=True, num_workers=8, batch_size=6)
@@ -104,41 +112,30 @@ def train(net, finalR, finalL, finalLabel, EPOCHS, BATCH_SIZE):
             outputs = outputs.cpu()
             depthmap = depthmap.cpu()
             loss = loss_function(outputs, depthmap)
-            #print("Loss:", float(loss))
+            print("Loss:", float(loss))
             avg_loss+=loss
             loss.backward()
             optimizer.step()
+            
         #Print out images and epoch numbers 
         print("Epoch number: ", COUNTER)
         COUNTER += 1 
-        # avg_loss = np.array(avg_loss)
-        #print("Average Loss:", avg_loss/i)
-        # plot_weights(net.cpu(), 0, single_channel = False)
+        print("Average Loss:", avg_loss/i)
         outputs = outputs.cpu()
         # img1 = img1.cpu()
         # img2 = img2.cpu()
         depthmap = depthmap.cpu()
-        #print("Output size", outputs.size())
-        #for param in net.parameters():
-        #    print('average weight per layer: ', np.mean(np.array(param.data.cpu())))
+
         image = np.swapaxes(img1.numpy(), 1,3)
         image1 = np.swapaxes(img2.numpy(), 1,3)
         plt.figure()
-        plt.imshow(image[0])
+        plt.imshow(image[0].astype('uint8'))
         plt.figure()
-        plt.imshow(image1[0])
+        plt.imshow(image1[0].astype('uint8'))
         plt.show()
         print('Likeliness value:', outputs[-1])
         print("Actual Likeness", depthmap[-1])
     return net
-
-from google.colab import drive
-drive.mount('/content/drive')
-
-!ls "/content/drive/My Drive/Colab Notebooks/Image 1"
-!cp "/content/drive/My Drive/Colab Notebooks/Image 1/cropped_noisy_compilation_1.npy" "cropped_noisy_compilation_1.npy"
-!cp "/content/drive/My Drive/Colab Notebooks/Image 1/cropped_original_compilation_1.npy" "cropped_original_compilation_1.npy"
-!cp "/content/drive/My Drive/Colab Notebooks/Image 1/similarity_rating_compilation_1.npy" "similarity_rating_compilation_1.npy"
 
 import matplotlib.pyplot as plt
 
@@ -146,29 +143,12 @@ NOISY = np.load("cropped_noisy_compilation_1.npy")
 ORIG = np.load("cropped_original_compilation_1.npy")
 LABEL = np.load("similarity_rating_compilation_1.npy")
 
-
-# NOISY = np.swapaxes(NOISY, 1,3)
-# for i in range(50):
-#   plt.figure()
-#   plt.imshow(NOISY[i])
-#   plt.show()
-# NOISY = np.swapaxes(NOISY, 1,3)
-
-
 NOISY = torch.from_numpy(NOISY).float()
 ORIG = torch.from_numpy(ORIG).float()
 LABEL = torch.from_numpy(LABEL).float()
 
 net = SiameseNetwork()
-net#.cuda()
 NumberIMG = 500
 EPOCHS = 50
 
-#finalR, finalL, finalLabel = imageBatch(NumberIMG)
-
-final = train(net,NOISY,ORIG,LABEL,EPOCHS,NumberIMG)
-
-a = torch.tensor([[1,2,3],[2,3,4]])
-
-a = a.numpy()
-
+final = train(net,ORIG,NOISY,LABEL,EPOCHS,NumberIMG)
