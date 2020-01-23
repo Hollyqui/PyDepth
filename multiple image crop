@@ -1,0 +1,153 @@
+import numpy as np
+import matplotlib.image as mpimg
+from random import randint
+import matplotlib.pyplot as plt
+import cv2
+import os.path
+import glob
+import time
+
+img_dir = "/Users/06fioritom/Desktop"
+data_path = os.path.join(img_dir, '*jpg')
+files = sorted(glob.glob(data_path))
+
+image_number = 1
+for image in files:
+    des = "image" + str(image_number) + ".jpg"
+    original_image_path = os.path.join("/Users/06fioritom/Desktop/", des)
+    original_img = mpimg.imread(original_image_path)
+    print("             ", original_image_path)
+    time.sleep(5)
+    original_img = original_img[:, :, :3]
+
+    # generates the list of random coordinate points
+    coordinate_list = []
+    training_dataset_size = 100
+    img_height, img_width, img_colour = original_img.shape
+    i = 0
+    for i in range(training_dataset_size):
+        random_x = randint(30, img_width - 30)  # sets an arbitrary 30 pixel wide border to stop the code tripping over itself
+        random_y = randint(30, img_height - 30)
+        random_coordinate = (random_x, random_y)
+        coordinate_list.append(random_coordinate)
+
+    print("Co. list: ", coordinate_list)
+
+    des = "image" + str(image_number) + "noisy.png"
+    noisy_image_path = os.path.join("/Users/06fioritom/Desktop/", des)
+    noisy_image = cv2.imread(noisy_image_path)
+    cv2.resize(noisy_image, (img_width, img_height))
+
+    print("Original image shape: ", original_img.shape)
+    print("Noisy image shape: ", noisy_image.shape)
+    print("             ", noisy_image_path)
+    time.sleep(5)
+    
+    cropped_original_compilation = []
+    cropped_noisy_compilation = []
+    similarity_rating_compilation = []
+    shifted_coordinate_list = []
+
+    print(type(original_img))
+    print(type(noisy_image))
+    print(type(cropped_original_compilation))
+    print(type(cropped_noisy_compilation))
+    print(type(similarity_rating_compilation))
+
+    i = 0
+    for i in range(training_dataset_size):
+
+        # defines the area to crop for original image
+        x, y = coordinate_list[i][0], coordinate_list[i][1]
+        # print("x: ", x, "y: ", y)
+
+        crop_range_y_lower = y + 9
+        crop_range_y_upper = y - 9
+        crop_range_x_lower = x + 9
+        crop_range_x_upper = x - 9
+
+        cropped_original = original_img[crop_range_y_upper:crop_range_y_lower, crop_range_x_upper:crop_range_x_lower, :]
+        print("cropped original shape:-------------------- ", cropped_original.shape, )
+        cropped_original = cropped_original.tolist()
+        cropped_original_compilation.append(cropped_original)  # adds cropped region to list
+        cropped_original_compilation = np.array(cropped_original_compilation)
+        print("original compilation: ", cropped_original_compilation.shape)
+        cropped_original_compilation = cropped_original_compilation.tolist()
+
+        # defines the area to crop for noisy image
+        if i % 10 == 0:  # makes every tenth image a pair with 100% similarity
+            crop_range_y_lower = y + 9
+            crop_range_y_upper = y - 9
+            crop_range_x_lower = x + 9
+            crop_range_x_upper = x - 9
+            cropped_noisy = noisy_image[crop_range_y_upper:crop_range_y_lower, crop_range_x_upper:crop_range_x_lower, :]
+            print("cropped noisy shape:----------------------- ", cropped_noisy.shape)
+            cropped_noisy = cropped_noisy.tolist()
+            cropped_noisy_compilation.append(cropped_noisy)
+            cropped_noisy_compilation = np.array(cropped_noisy_compilation)
+            print("noisy compilation:    ", cropped_noisy_compilation.shape)
+            cropped_noisy_compilation = cropped_noisy_compilation.tolist()
+
+            similarity_rating = 1
+            similarity_rating_compilation.append(similarity_rating)
+            print("similarity: -------------------------------------------------", similarity_rating)
+
+        else:
+            noise_crop_y_shift = randint(-18, 18)  # gives random y shift of +/- 18 pixels
+            noise_crop_x_shift = randint(-18, 18)  # gives random x shift of +/- 18 pixels
+            print(noise_crop_x_shift, noise_crop_y_shift)
+            xn, yn = x + noise_crop_x_shift, y + noise_crop_y_shift  # recenters the 18*18 selection based on y and y shift
+            crop_range_y_lower = yn + 9
+            crop_range_y_upper = yn - 9
+            crop_range_x_lower = xn + 9
+            crop_range_x_upper = xn - 9
+            cropped_noisy = noisy_image[crop_range_y_upper:crop_range_y_lower, crop_range_x_upper:crop_range_x_lower, :]
+            print("cropped noisy shape:----------------------- ", cropped_noisy.shape)
+            cropped_noisy = cropped_noisy.tolist()
+            cropped_noisy_compilation.append(cropped_noisy)
+            cropped_noisy_compilation = np.array(cropped_noisy_compilation)
+            print("noisy compilation:    ", cropped_noisy_compilation.shape)
+            cropped_noisy_compilation = cropped_noisy_compilation.tolist()
+
+            shift_x = abs(noise_crop_x_shift)
+            shift_y = abs(noise_crop_y_shift)
+            similarity_rating = 324 - (shift_y * 18) - abs((18 - shift_y) * shift_x)
+            similarity_rating = similarity_rating / 324
+            if similarity_rating < 0:
+                similarity_rating = 0
+            similarity_rating_compilation.append(similarity_rating)
+            print("similarity: -------------------------------------------------", similarity_rating)
+
+
+        i = i + 1
+
+    cropped_original_compilation = np.array(cropped_original_compilation)
+    cropped_original_compilation = np.moveaxis(cropped_original_compilation, 3, 1)
+    cropped_noisy_compilation = np.array(cropped_noisy_compilation)
+    cropped_noisy_compilation = np.moveaxis(cropped_noisy_compilation, 3, 1)
+    similarity_rating_compilation = np.array(similarity_rating_compilation)
+
+    # # if uncommented, will plot the location of the randomly chosen pixel locations
+    # for i in range(training_dataset_size):
+    #     plt.plot(coordinate_list[i][0],coordinate_list[i][1], 'o')
+    # plt.show()
+
+    print("Cropped original array shape:  ", cropped_original_compilation.shape)
+    print("Cropped noisy array shape:     ", cropped_noisy_compilation.shape)
+    print("Similarity rating array shape: ", similarity_rating_compilation.shape)
+
+    des = "image" + str(image_number)
+    folder_make_path = os.path.join("/Users/06fioritom/Desktop/", des)
+    os.makedirs(folder_make_path)
+
+    des = "cropped_original_compilation_" + str(image_number)
+    write_location_original = os.path.join(folder_make_path, des)
+    np.save(write_location_original, cropped_original_compilation)
+    des = "cropped_noisy_compilation_" + str(image_number)
+    write_location_noisy = os.path.join(folder_make_path, des)
+    np.save(write_location_noisy, cropped_noisy_compilation)
+    des = "similarity_rating_compilation_" + str(image_number)
+    write_location_similarity = os.path.join(folder_make_path, des)
+    np.save(write_location_similarity, similarity_rating_compilation)
+
+    image_number = image_number + 1
