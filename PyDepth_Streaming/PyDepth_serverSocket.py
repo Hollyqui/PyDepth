@@ -4,8 +4,6 @@ import cv2
 import pickle
 import numpy as np
 import struct
-from PIL import Image
-import matplotlib.pyplot as pl
 
 import subprocess
 
