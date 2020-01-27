@@ -7,10 +7,14 @@ from picamera import PiCamera
 import numpy as np
 import sys
 
+#CHANGE IP ADDRESS HERE
+HOST='192.168.43.103'
+PORT=8000
+
 sys.tracebacklimit = 0
 
 client_socket = socket.socket()
-client_socket.connect(('192.168.43.68', 8000))
+client_socket.connect((HOST,PORT))
 
 connection = client_socket.makefile('wb')
 try:

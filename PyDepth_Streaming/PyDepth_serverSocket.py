@@ -4,16 +4,15 @@ import cv2
 import pickle
 import numpy as np
 import struct
-
-import subprocess
-
-
-HOST='192.168.43.103'
-PORT=8000
-
 import io
 import socket
 import struct
+import subprocess
+
+#CHANGE IP ADDRESS HERE
+HOST='192.168.43.103'
+PORT=8000
+
 
 print("Welcome to the PyDepth streaming interface\n")
 print("You can quit the stream at any moment by pushing on the Q key of your keyboard\n")
@@ -63,6 +62,7 @@ try:
 			np.save("Saved_Images/streamLeft.npy",imgLeft)
 			np.save("Saved_Images/streamRight.npy",imgRight)
 			x = 0
+		x+=1
 		
 		if key == ord("q"):
 			break
