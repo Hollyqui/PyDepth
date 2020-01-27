@@ -16,3 +16,5 @@ Before using the stereopi, we need to make sure that every device is connected t
 For the one in the StereoPi, you will need to ssh in with ```ssh pi@pydepth.local``` (or ```putty.exe -ssh pi@pydepth.local``` on windows) and modify the hardcoded ip address in the script. It is located in the directory ```~/PyDepth_Client/``` . You can use nano to modify the file.
 
 That is all there is to do!
+
+Now you just need to run the shell scripts (```./PyDepth_Run.sh``` for Linux, ```sh PyDepth_Run.sh``` for MacOS and you can just run the batch file on windows by double clicking on the icon) and it will ask to enter a password to log into the StereoPi.
