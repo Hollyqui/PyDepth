@@ -64,6 +64,10 @@ try:
 			x = 0
 		x+=1
 		
+		if key == ord("p"):
+			cv2.imwrite('Saved_Images/instPicLeft.png',imgLeft)
+			cv2.imwrite('Saved_Images/instPicRight.png',imgRight)
+		
 		if key == ord("q"):
 			break
 		
