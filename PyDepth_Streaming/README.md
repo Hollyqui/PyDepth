@@ -1,11 +1,10 @@
 # PyDepth Project Streaming Interface
 The whole project relies on the stereo images broadcasted by the StereoPi device. The scripts here open a server-client communication stream where the StereoPi is the client and broadcasts images to the computer.
-<<<<<<< HEAD
+
 The scripts work for Windows (the .bat file), MacOS and Linux (the .sh file). There is no need to run the .py files, everything is taken care of by the shell scripts. The clientSocket.py file is already in the StereoPi. It is important to have a folder called Saved_Images in the same directory as the code, server-side.
-=======
+
 The scripts work for Windows (the .bat file), MacOS and Linux (the .sh file). There is no need to run the .py files, everything is taken care of by the shell scripts. The clientSocket.py file is already in the StereoPi.
 It is very important to have the folder Saved_Images in the same directory as the server programme and the shell scripts. Every ten images, an image is going to be saved there in the format of .npy, ready to be sent through the neural network.
->>>>>>> 31c8e801ce683581f2cf6e20069ea9b7639d068b
 
 ## Prerequirements
 To run these scripts you will need to install OpenCV-python by running ```pip install opencv-python``` in the command line. 
