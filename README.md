@@ -1,13 +1,8 @@
 We're doing a very nice project
-
 Might I add it is flabbergasting 
-
 What did you expect?
-
 We are all rather dashing 
-
 It will be about Stereo Vison
-
 That was our decision 
 
 We will work in harmony 
